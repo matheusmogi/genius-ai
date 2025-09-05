@@ -1,17 +1,17 @@
-﻿import streamlit as st
+﻿import yaml
+import streamlit as st
+from streamlit_supabase_auth import logout_button
+from authenticator import sign_in
 from source_strategy import get_source
 from model import Model
 from langchain.memory import ConversationBufferMemory
 
 # load env keys
 from dotenv import load_dotenv
-
 load_dotenv()
 
 st.set_page_config(page_title="Genius", page_icon="🧞")
-
 MEMORY = ConversationBufferMemory()
-
 
 def chat():
     st.html('<h1><center>Welcome to Genius 🧞</center></h1>')
@@ -52,21 +52,23 @@ def sidebar():
         provider = st.selectbox('Select the model provider', providers.keys())
         model = st.selectbox('Select the model', providers[provider]['Models'])
 
-    col1, col2 = st.columns(2)
     if source:
-        if col1.button('Load Model'):
+        if st.button('Load Model'):
             document = sources[source_type]["Loader"].load(source)
             Model.load_model(providers[provider], model, document, source_type)
 
-        if col2.button('Clean History'):
-            st.session_state["messages"]=MEMORY
+    if st.button('Clean History'):
+        st.session_state["messages"]=MEMORY
 
+    logout_button()
 
 
 def main():
-    with st.sidebar:
-        sidebar()
-    chat()
+    if sign_in():
+        with st.sidebar:
+           sidebar()
+        chat()
+
 
 
 if __name__ == '__main__':

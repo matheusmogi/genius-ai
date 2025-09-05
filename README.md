@@ -30,6 +30,7 @@ The Codebase Is Organized For Clarity And Extensibility:
 - `app/loader.py`: Abstractions And Concrete Loaders For Each Source Type.
 - `app/source_strategy.py`: Registry That Maps Source Labels To Their UI Inputs And Loaders.
 - `app/model.py`: Provider Registry, Prompt Template Construction, And Chain Assembly.
+- `app/authenticator.py`: Supabase-Powered Authentication (`streamlit_supabase_auth`).
 - `app/requirements.txt`: Fully Pinned Runtime Dependencies.
 
 ### Data Flow (High Level)
@@ -86,6 +87,10 @@ Create A File Named `.env` In The Project Root With At Least One Provider Key. T
 GROQ_API_KEY=YourGroqApiKey
 OPEN_AI_API_KEY=YourOpenAiApiKey
 ANTHROPIC_API_KEY=YourAnthropicApiKey
+
+# Authentication (Supabase)
+SUPABASE_URL=YourSupabaseProjectUrl
+SUPABASE_ANON_KEY=YourSupabaseAnonKey
 ```
 
 Notes:
@@ -126,6 +131,8 @@ docker run --rm -p 8501:8501 \
   -e GROQ_API_KEY=YourGroqApiKey \
   -e OPEN_AI_API_KEY=YourOpenAiApiKey \
   -e ANTHROPIC_API_KEY=YourAnthropicApiKey \
+  -e SUPABASE_URL=YourSupabaseProjectUrl \
+  -e SUPABASE_ANON_KEY=YourSupabaseAnonKey \
   genius
 ```
 
@@ -140,6 +147,7 @@ Open `http://localhost:8501`.
 3. Choose A Provider (Groq/OpenAI/Anthropic) And A Model.
 4. Click “Load Model”. The App Builds A Context-Aware Chain.
 5. Start Chatting In The Main Panel; Use “Clean History” To Reset Memory.
+6. Authentication: On First Load, A Login Form Is Shown; Use The Sidebar Logout Button To End The Session.
 
 ---
 
@@ -150,6 +158,11 @@ Located In `app/model.py`:
 - `GROQ_API_KEY` → Used By `langchain_groq.ChatGroq`
 - `OPEN_AI_API_KEY` → Used By `langchain_openai.ChatOpenAI`
 - `ANTHROPIC_API_KEY` → Used By `langchain_anthropic.ChatAnthropic`
+
+Authentication (Supabase):
+
+- `SUPABASE_URL` → Your Supabase Project URL (Auth Settings Must Allow `http://localhost:8501`).
+- `SUPABASE_ANON_KEY` → Your Supabase Anonymous Public Key.
 
 Models Currently Exposed In The UI:
 
@@ -187,35 +200,10 @@ You Can Modify These In `Model.get_providers()`.
 
 ---
 
-## Troubleshooting
-
-- **ModuleNotFoundError: No module named `langchain_core.cache` (in Docker)**
-  - This typically indicates a version mismatch across the LangChain packages. Ensure the LangChain family is aligned in `app/requirements.txt`.
-  - Example aligned set:
-    ```
-    langchain==0.3.0
-    langchain-core==0.3.75
-    langchain-community==0.3.0
-    langchain-openai==0.3.0
-    langchain-anthropic==0.3.0
-    langchain-groq==0.2.0
-    ```
-  - After changing versions, rebuild without cache:
-    ```bash
-    docker build --no-cache -t genius .
-    ```
-  - If the error persists, either:
-    - Upgrade all provider packages to `0.3.x` to match `langchain-core>=0.3`, or
-    - Downgrade `langchain-core` to a compatible `0.2.x` if using `langchain-*-==0.2.x` providers.
-
----
-
 ## Roadmap Ideas
 
 - Add Vector Storage For Long-Term Retrieval Augmented Generation (RAG).
-- Add Unit Tests And CI Pipeline.
 - Expand Model Catalog And Provider Options.
-- Add Auth For Multi-User Hosting Scenarios.
 
 ---
 
