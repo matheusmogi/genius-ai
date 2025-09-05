@@ -18,6 +18,7 @@ An Employer-Facing, Production-Ready Demonstration Of A Streamlit App That Lets 
 - **Streaming Responses**: Smooth, Real-Time Token Streaming In The Chat UI.
 - **Robust Web Loading**: Randomized User-Agent + Retry Loop For Web Pages.
 - **Secure Key Handling**: `.env`-Based Secrets Loaded Via `python-dotenv`.
+- **Retrieval‑Augmented Generation (RAG)**: History‑Aware Question Rewriting, Vector Retrieval (Chroma), And Focused QA Over Retrieved Chunks.
 
 ---
 
@@ -31,6 +32,8 @@ The Codebase Is Organized For Clarity And Extensibility:
 - `app/source_strategy.py`: Registry That Maps Source Labels To Their UI Inputs And Loaders.
 - `app/model.py`: Provider Registry, Prompt Template Construction, And Chain Assembly.
 - `app/authenticator.py`: Supabase-Powered Authentication (`streamlit_supabase_auth`).
+- `app/rag.py`: Vector Index Helper (Chunk → Embed → Persist With Chroma; Retriever Builder).
+- `app/rag_chain.py`: History‑Aware RAG Chain That Returns Only The Final `answer` String.
 - `app/requirements.txt`: Fully Pinned Runtime Dependencies.
 
 ### Data Flow (High Level)
@@ -136,6 +139,16 @@ docker run --rm -p 8501:8501 \
   genius
 ```
 
+Persist The Vector Store (Recommended):
+
+```bash
+docker run --rm -p 8501:8501 \
+  --env-file .env \
+  -e VECTORSTORE_DIR=/app/.chroma \
+  -v genius_chroma:/app/.chroma \
+  genius
+```
+
 Open `http://localhost:8501`.
 
 ---
@@ -149,6 +162,8 @@ Open `http://localhost:8501`.
 5. Start Chatting In The Main Panel; Use “Clean History” To Reset Memory.
 6. Authentication: On First Load, A Login Form Is Shown; Use The Sidebar Logout Button To End The Session.
 
+RAG: Enable The “Use Retrieval‑Augmented Generation” Toggle In The Sidebar Before Clicking “Load Model”.
+
 ---
 
 ## Environment Variables (Details)
@@ -158,6 +173,10 @@ Located In `app/model.py`:
 - `GROQ_API_KEY` → Used By `langchain_groq.ChatGroq`
 - `OPEN_AI_API_KEY` → Used By `langchain_openai.ChatOpenAI`
 - `ANTHROPIC_API_KEY` → Used By `langchain_anthropic.ChatAnthropic`
+
+RAG / Vector Store:
+
+- `VECTORSTORE_DIR` → Optional. Directory Path For Chroma Persistence (Default: `.chroma`). Mount As A Volume In Docker For Reuse.
 
 Authentication (Supabase):
 

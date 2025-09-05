@@ -5,6 +5,7 @@ from authenticator import sign_in
 from source_strategy import get_source
 from model import Model
 from langchain.memory import ConversationBufferMemory
+from rag_chain import use_rag
 
 # load env keys
 from dotenv import load_dotenv
@@ -51,11 +52,20 @@ def sidebar():
         providers = Model.get_providers()
         provider = st.selectbox('Select the model provider', providers.keys())
         model = st.selectbox('Select the model', providers[provider]['Models'])
-
+    
+    rag_mode = st.toggle("Use Retrieval-Augmented Generation", value=True)
     if source:
         if st.button('Load Model'):
             document = sources[source_type]["Loader"].load(source)
-            Model.load_model(providers[provider], model, document, source_type)
+            if rag_mode:
+                providers = Model.get_providers()
+                chat_llm = providers[provider]['Chat'](model=model, api_key=providers[provider]['Key'])
+                chain = use_rag(chat_llm, document, source_type)
+                st.session_state["Chain"] = chain
+            else:
+                chain = Model.load_model(providers[provider], model, document, source_type)
+                st.session_state["Chain"] = chain
+
 
     if st.button('Clean History'):
         st.session_state["messages"]=MEMORY

@@ -8,6 +8,7 @@ import os
 
 
 class Model:
+ 
 
     @staticmethod
     def load_model(provider, model, document, document_type):
@@ -15,7 +16,7 @@ class Model:
         provider['Chat'].model_rebuild()
         chat = provider['Chat'](model=model, api_key=provider['Key'])
         chain = template | chat
-        st.session_state["Chain"] = chain
+        return chain
 
     @staticmethod
     def build_template(document, document_type):
